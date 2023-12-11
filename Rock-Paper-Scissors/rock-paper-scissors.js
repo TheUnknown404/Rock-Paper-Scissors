@@ -1,10 +1,13 @@
 // Get references to HTML elements
 let textElement1 = document.getElementById("text");
 let textElement2 = document.getElementById("results");
-let result;
 
-// Variable to store the computer's move
-let computerMove;
+// Object to keep track of game statistics, retrieve from localStorage or initialize
+let score = JSON.parse(localStorage.getItem("score")) || {
+  totalWins: 0,
+  totalLosses: 0,
+  totalTies: 0,
+};
 
 // Function to determine the computer's move (rock, paper, or scissors)
 function opponent() {
@@ -18,23 +21,20 @@ function opponent() {
   }
 }
 
-// Variables to keep track of game statistics
-let totalWins = 0;
-let totalLosses = 0;
-let totalTies = 0;
-
 // Function to update and display game outcome statistics
 function outcome() {
   if (result === "won") {
-    totalWins += 1;
-    document.getElementById("wins").innerHTML = totalWins;
+    score.totalWins++;
+    document.getElementById("wins").innerHTML = score.totalWins;
   } else if (result === "tied") {
-    totalTies += 1;
-    document.getElementById("ties").innerHTML = totalTies;
+    score.totalTies++;
+    document.getElementById("ties").innerHTML = score.totalTies;
   } else {
-    totalLosses += 1;
-    document.getElementById("losses").innerHTML = totalLosses;
+    score.totalLosses++;
+    document.getElementById("losses").innerHTML = score.totalLosses;
   }
+  // Save the updated score to localStorage
+  localStorage.setItem("score", JSON.stringify(score));
 }
 
 // Function to handle user's choice and determine the game outcome
@@ -65,7 +65,31 @@ function handleUserChoice(userChoice) {
   outcome();
 }
 
+// Function to reset scores
+function resetScores() {
+  // Reset scores to zero
+  score.totalWins = 0;
+  score.totalLosses = 0;
+  score.totalTies = 0;
+
+  // Update the HTML to display the reset scores
+  document.getElementById("wins").innerHTML = score.totalWins;
+  document.getElementById("ties").innerHTML = score.totalTies;
+  document.getElementById("losses").innerHTML = score.totalLosses;
+
+  // Save the reset scores to localStorage
+  localStorage.setItem("score", JSON.stringify(score));
+}
+
+// Initialize scores when the page loads
+document.getElementById("wins").innerHTML = score.totalWins;
+document.getElementById("ties").innerHTML = score.totalTies;
+document.getElementById("losses").innerHTML = score.totalLosses;
+
 // Event listeners for user's choices (rock, paper, scissors)
 document.getElementById("rock").addEventListener("click", () => handleUserChoice("rock"));
 document.getElementById("paper").addEventListener("click", () => handleUserChoice("paper"));
 document.getElementById("scissors").addEventListener("click", () => handleUserChoice("scissors"));
+
+// Event listener for the reset button
+document.getElementById("reset").addEventListener("click", resetScores);
