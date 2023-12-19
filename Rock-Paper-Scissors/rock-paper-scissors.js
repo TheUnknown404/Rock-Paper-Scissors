@@ -1,95 +1,113 @@
-// Get references to HTML elements
-let textElement1 = document.getElementById("text");
-let textElement2 = document.getElementById("results");
+document.addEventListener("DOMContentLoaded", function () {
+  // Initial results or retrieve from local storage
+  let results = JSON.parse(localStorage.getItem("results")) || {
+    totalWins: 0,
+    totalLosses: 0,
+    totalTies: 0,
+  };
 
-// Object to keep track of game statistics, retrieve from localStorage or initialize
-let score = JSON.parse(localStorage.getItem("score")) || {
-  totalWins: 0,
-  totalLosses: 0,
-  totalTies: 0,
-};
+  // Update UI with initial results
+  updateScore(results);
 
-// Function to determine the computer's move (rock, paper, or scissors)
-function opponent() {
-  let randomNumber = Math.random();
-  if (randomNumber >= 0 && randomNumber <= 1 / 3) {
-    computerMove = "rock";
-  } else if (randomNumber >= 1 / 3 && randomNumber <= 2 / 3) {
-    computerMove = "paper";
-  } else {
-    computerMove = "scissors";
-  }
-}
+  // Array of game selectors
+  const gameSelectors = [".rock", ".paper", ".scissors"];
 
-// Function to update and display game outcome statistics
-function outcome() {
-  if (result === "won") {
-    score.totalWins++;
-    document.getElementById("wins").innerHTML = score.totalWins;
-  } else if (result === "tied") {
-    score.totalTies++;
-    document.getElementById("ties").innerHTML = score.totalTies;
-  } else {
-    score.totalLosses++;
-    document.getElementById("losses").innerHTML = score.totalLosses;
-  }
-  // Save the updated score to localStorage
-  localStorage.setItem("score", JSON.stringify(score));
-}
+  // Add event listeners to game selectors
+  gameSelectors.forEach((selector) => {
+    const pick = document.querySelector(selector);
 
-// Function to handle user's choice and determine the game outcome
-function handleUserChoice(userChoice) {
-  // Display the user's choice
-  textElement1.textContent = "You Picked " + userChoice;
+    if (pick) {
+      pick.addEventListener("click", () => {
+        const playerPick = selector.slice(1);
+        const computerPick = computerLogic();
+        playGame(playerPick, computerPick);
+      });
+    }
+  });
 
-  // Determine the computer's move
-  opponent();
-
-  // Compare user's choice with the computer's move to determine the result
-  if (computerMove === userChoice) {
-    result = "tied";
-  } else if (
-    (userChoice === "rock" && computerMove === "scissors") ||
-    (userChoice === "paper" && computerMove === "rock") ||
-    (userChoice === "scissors" && computerMove === "paper")
-  ) {
-    result = "won";
-  } else {
-    result = "lost";
+  // Play game with player and computer picks
+  function playGame(playerPick, computerPick) {
+    console.log(`You Picked ${playerPick}`);
+    compareResult(playerPick, computerPick, results);
+    updateScore(results);
   }
 
-  // Display the game result
-  textElement2.textContent = "You have " + result;
+  // Logic to determine computer pick
+  function computerLogic() {
+    let computerPick;
+    let computerNumber = Math.random();
+    
+    if (computerNumber <= 1 / 3) {
+      computerPick = "rock";
+    } else if (computerNumber >= 1 / 3 && computerNumber <= 2 / 3) {
+      computerPick = "paper";
+    } else {
+      computerPick = "scissors";
+    }
 
-  // Update and display game outcome statistics
-  outcome();
-}
+    return computerPick;
+  }
 
-// Function to reset scores
-function resetScores() {
+  // Compare player and computer picks, update results
+  function compareResult(playerPick, computerPick, results) {
+    if (playerPick === computerPick) {
+      results.ties++;
+    } else if (
+      (playerPick === "rock" && computerPick === "paper") ||
+      (playerPick === "paper" && computerPick === "scissors") ||
+      (playerPick === "scissors" && computerPick === "rock")
+    ) {
+      results.losses++;
+    } else {
+      results.wins++;
+    }
+  }
+
+  // Update the UI with current results
+  function updateScore(results) {
+    document.querySelector(".wins").innerHTML = results.wins;
+    document.querySelector(".losses").innerHTML = results.losses;
+    document.querySelector(".ties").innerHTML = results.ties;
+
+    // Update results in local storage
+    localStorage.setItem("results", JSON.stringify(results));
+  }
+
   // Reset scores to zero
-  score.totalWins = 0;
-  score.totalLosses = 0;
-  score.totalTies = 0;
+  function resetScores(results) {
+    results.ties = 0;
+    results.wins = 0;
+    results.losses = 0;
+    updateScore(results);
+  }
 
-  // Update the HTML to display the reset scores
-  document.getElementById("wins").innerHTML = score.totalWins;
-  document.getElementById("ties").innerHTML = score.totalTies;
-  document.getElementById("losses").innerHTML = score.totalLosses;
+  // Event listener for the reset button
+  document.querySelector(".reset").addEventListener("click", () => {
+    resetScores(results);
+  });
 
-  // Save the reset scores to localStorage
-  localStorage.setItem("score", JSON.stringify(score));
-}
+  // Event listener for the auto button to play the game automatically
+  document.querySelector(".auto").addEventListener("click", () => {
+    setInterval(() => {
+      const playerPick = playerLogic();
+      const computerPick = computerLogic();
+      playGame(playerPick, computerPick);
+    }, 1000);
+  });
 
-// Initialize scores when the page loads
-document.getElementById("wins").innerHTML = score.totalWins;
-document.getElementById("ties").innerHTML = score.totalTies;
-document.getElementById("losses").innerHTML = score.totalLosses;
+  // Logic to determine player pick automatically
+  function playerLogic() {
+    let playerPick;
+    let playerNumber = Math.random();
+    
+    if (playerNumber <= 1 / 3) {
+      playerPick = "rock";
+    } else if (playerNumber >= 1 / 3 && playerNumber <= 2 / 3) {
+      playerPick = "paper";
+    } else {
+      playerPick = "scissors";
+    }
 
-// Event listeners for user's choices (rock, paper, scissors)
-document.getElementById("rock").addEventListener("click", () => handleUserChoice("rock"));
-document.getElementById("paper").addEventListener("click", () => handleUserChoice("paper"));
-document.getElementById("scissors").addEventListener("click", () => handleUserChoice("scissors"));
-
-// Event listener for the reset button
-document.getElementById("reset").addEventListener("click", resetScores);
+    return playerPick;
+  }
+});
