@@ -1,113 +1,101 @@
-document.addEventListener("DOMContentLoaded", function () {
-  // Initial results or retrieve from local storage
-  let results = JSON.parse(localStorage.getItem("results")) || {
-    totalWins: 0,
-    totalLosses: 0,
-    totalTies: 0,
-  };
+// Event listener for when the DOM content has loaded
+document.addEventListener('DOMContentLoaded', function () {
 
-  // Update UI with initial results
-  updateScore(results);
+  // Selecting HTML elements for wins, ties, and losses
+  let lossesHTML = document.querySelector('.losses');
+  let winsHTML = document.querySelector('.wins');
+  let tiesHTML = document.querySelector('.ties');
 
-  // Array of game selectors
-  const gameSelectors = [".rock", ".paper", ".scissors"];
-
-  // Add event listeners to game selectors
-  gameSelectors.forEach((selector) => {
-    const pick = document.querySelector(selector);
-
-    if (pick) {
-      pick.addEventListener("click", () => {
-        const playerPick = selector.slice(1);
-        const computerPick = computerLogic();
-        playGame(playerPick, computerPick);
-      });
+  // Store the results and check for errors while storing them in local storage
+  let results = {};
+  const storedResults = localStorage.getItem('results');
+  if (storedResults) {
+    try {
+      results = JSON.parse(storedResults);
+    } catch (error) {
+      console.error('Error parsing local storage data:', error);
     }
+  } else {
+    results = {
+      totalWins: 0,
+      totalLosses: 0,
+      totalTies: 0,
+    };
+  }
+  updateScore();
+
+  // Event listeners for rock, paper, and scissors selections
+  const gameSelectors = ['rock', 'paper', 'scissors'];
+  gameSelectors.forEach(function (selector) {
+    document.querySelector(`.${selector}`).addEventListener('click', () => {
+      let playerPick = selector;
+      let computerPick = generateComputerPick();
+      game(playerPick, computerPick);
+      updateScore();
+    });
   });
 
-  // Play game with player and computer picks
-  function playGame(playerPick, computerPick) {
-    console.log(`You Picked ${playerPick}`);
-    compareResult(playerPick, computerPick, results);
-    updateScore(results);
-  }
-
-  // Logic to determine computer pick
-  function computerLogic() {
-    let computerPick;
-    let computerNumber = Math.random();
-    
-    if (computerNumber <= 1 / 3) {
-      computerPick = "rock";
-    } else if (computerNumber >= 1 / 3 && computerNumber <= 2 / 3) {
-      computerPick = "paper";
-    } else {
-      computerPick = "scissors";
-    }
-
-    return computerPick;
-  }
-
-  // Compare player and computer picks, update results
-  function compareResult(playerPick, computerPick, results) {
-    if (playerPick === computerPick) {
-      results.ties++;
-    } else if (
-      (playerPick === "rock" && computerPick === "paper") ||
-      (playerPick === "paper" && computerPick === "scissors") ||
-      (playerPick === "scissors" && computerPick === "rock")
-    ) {
-      results.losses++;
-    } else {
-      results.wins++;
+  // Game function which compares the computer pick and player pick and updates the score
+  function game(playerPick, computerPick) {
+    switch (true) {
+      case playerPick === computerPick:
+        results.totalTies++;
+        break;
+      case (
+        (playerPick === 'rock' && computerPick === 'paper') ||
+        (playerPick === 'paper' && computerPick === 'scissors') ||
+        (playerPick === 'scissors' && computerPick === 'rock')
+      ):
+        results.totalLosses++;
+        break;
+      default:
+        results.totalWins++;
     }
   }
 
-  // Update the UI with current results
-  function updateScore(results) {
-    document.querySelector(".wins").innerHTML = results.wins;
-    document.querySelector(".losses").innerHTML = results.losses;
-    document.querySelector(".ties").innerHTML = results.ties;
-
-    // Update results in local storage
-    localStorage.setItem("results", JSON.stringify(results));
+  // Function to get the computer to pick rock paper or scissors
+  function generateComputerPick() {
+    let number = Math.random();
+    return number < 1 / 3
+      ? 'rock'
+      : number > 2 / 3
+      ? 'paper'
+      : 'scissors';
   }
 
-  // Reset scores to zero
-  function resetScores(results) {
-    results.ties = 0;
-    results.wins = 0;
-    results.losses = 0;
-    updateScore(results);
+  // Function to update the score
+  function updateScore() {
+    winsHTML.innerHTML = results.totalWins;
+    tiesHTML.innerHTML = results.totalTies;
+    lossesHTML.innerHTML = results.totalLosses;
+
+    localStorage.setItem('results', JSON.stringify(results));
   }
 
   // Event listener for the reset button
-  document.querySelector(".reset").addEventListener("click", () => {
-    resetScores(results);
+  document.querySelector('.reset').addEventListener('click', () => {
+    results.totalWins = 0;
+    results.totalTies = 0;
+    results.totalLosses = 0;
+    updateScore();
   });
 
-  // Event listener for the auto button to play the game automatically
-  document.querySelector(".auto").addEventListener("click", () => {
-    setInterval(() => {
-      const playerPick = playerLogic();
-      const computerPick = computerLogic();
-      playGame(playerPick, computerPick);
-    }, 1000);
-  });
-
-  // Logic to determine player pick automatically
-  function playerLogic() {
-    let playerPick;
-    let playerNumber = Math.random();
-    
-    if (playerNumber <= 1 / 3) {
-      playerPick = "rock";
-    } else if (playerNumber >= 1 / 3 && playerNumber <= 2 / 3) {
-      playerPick = "paper";
-    } else {
-      playerPick = "scissors";
-    }
-
-    return playerPick;
+  // Function for auto-playing the game at regular intervals
+  function autoPlay() {
+    let playerPick = generateComputerPick();
+    let computerSelection = generateComputerPick();
+    game(playerPick, computerSelection);
+    updateScore();
   }
+
+  // Event listener for the auto-play button
+  let autoPlayInterval;
+  document.querySelector('.auto').addEventListener('click', () => {
+    if (autoPlayInterval) {
+      clearInterval(autoPlayInterval);
+      autoPlayInterval = null;
+    } else {
+      autoPlayInterval = setInterval(autoPlay, 500);
+    }
+  });
 });
